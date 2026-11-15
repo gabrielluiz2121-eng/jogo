@@ -38,18 +38,26 @@ func _montar() -> void:
 	col.position.y = 0.85
 	add_child(col)
 
-	# Modelo provisório: túnica azul-anil, chapéu de palha e mochila.
+	# Modelo provisório inspirado na folha de conceito: túnica azul-acinzentada,
+	# calça verde-oliva, faixa escura, chapéu cônico de palha e cesto nas costas.
 	modelo = Node3D.new()
 	add_child(modelo)
-	var corpo := CapsuleMesh.new()
-	corpo.radius = 0.33
-	corpo.height = 1.5
-	modelo.add_child(U.malha(corpo, Color(0.25, 0.35, 0.6), Vector3(0, 0.75, 0)))
-	modelo.add_child(U.malha(U.esfera(0.22, 10), Color(0.9, 0.75, 0.6), Vector3(0, 1.55, 0)))
-	modelo.add_child(U.malha(U.cilindro(0.02, 0.5, 0.25, 12), Color(0.85, 0.75, 0.45), Vector3(0, 1.8, 0)))
-	modelo.add_child(U.malha(U.caixa(Vector3(0.5, 0.6, 0.3)), Color(0.55, 0.4, 0.25), Vector3(0, 1.05, 0.38)))
+	for x in [-0.13, 0.13]:
+		modelo.add_child(U.malha(U.cilindro(0.11, 0.12, 0.75, 6), Color(0.45, 0.48, 0.36), Vector3(x, 0.38, 0)))
+	modelo.add_child(U.malha(U.cilindro(0.26, 0.36, 0.75, 8), Color(0.38, 0.42, 0.58), Vector3(0, 1.05, 0)))
+	modelo.add_child(U.malha(U.cilindro(0.29, 0.3, 0.12, 8), Color(0.25, 0.22, 0.2), Vector3(0, 0.95, 0)))
+	for x in [-0.33, 0.33]:
+		var braco_m := U.malha(U.cilindro(0.07, 0.09, 0.6, 6), Color(0.38, 0.42, 0.58), Vector3(x, 1.08, 0))
+		braco_m.rotation.z = signf(x) * 0.15
+		modelo.add_child(braco_m)
+	modelo.add_child(U.malha(U.esfera(0.2, 10), Color(0.88, 0.72, 0.56), Vector3(0, 1.6, 0)))
+	modelo.add_child(U.malha(U.cilindro(0.02, 0.55, 0.3, 14), Color(0.85, 0.74, 0.45), Vector3(0, 1.82, 0)))
+	modelo.add_child(U.malha(U.cilindro(0.3, 0.24, 0.62, 10), Color(0.72, 0.58, 0.36), Vector3(0, 1.12, 0.36)))
+	# Ferramentas saindo do cesto.
+	modelo.add_child(U.malha(U.cilindro(0.025, 0.025, 0.6, 4), Color(0.45, 0.33, 0.22), Vector3(-0.1, 1.55, 0.38)))
+	modelo.add_child(U.malha(U.cilindro(0.025, 0.025, 0.5, 4), Color(0.45, 0.33, 0.22), Vector3(0.12, 1.5, 0.4)))
 	# "Nariz" para saber para onde está virado.
-	modelo.add_child(U.malha(U.caixa(Vector3(0.08, 0.08, 0.12)), Color(0.85, 0.65, 0.5), Vector3(0, 1.55, -0.24)))
+	modelo.add_child(U.malha(U.caixa(Vector3(0.06, 0.06, 0.1)), Color(0.85, 0.65, 0.5), Vector3(0, 1.6, -0.2)))
 
 	pivo = Node3D.new()
 	pivo.position.y = 1.5

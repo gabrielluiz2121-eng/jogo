@@ -12,6 +12,8 @@ var prontos := 0  # pacotes de chá prontos para pegar
 var _progresso := 0.0
 var _rotulo: Label3D
 var _slots: Array[MeshInstance3D] = []
+var _mat_cha := U.material(Color(0.45, 0.3, 0.15))
+var _mat_flor := U.material(Color(0.85, 0.95, 1.0), 0.5)
 
 
 func _ready() -> void:
@@ -66,10 +68,10 @@ func _atualizar_visual() -> void:
 		var s := _slots[i]
 		if i < prontos:
 			s.visible = true
-			s.material_override = U.material(Color(0.45, 0.3, 0.15))
+			s.material_override = _mat_cha
 		elif i < prontos + secando:
 			s.visible = true
-			s.material_override = U.material(Color(0.95, 0.35, 0.75), 0.5)
+			s.material_override = _mat_flor
 		else:
 			s.visible = false
 

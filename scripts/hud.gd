@@ -2,6 +2,7 @@ extends CanvasLayer
 ## Interface: mochila, avisos, status do barco e a loja do mercador.
 
 var mercador: Node
+var ciclo: Node
 var _mochila: Label
 var _status: Label
 var _dica: Label
@@ -20,7 +21,7 @@ func _ready() -> void:
 	add_child(raiz)
 
 	_mochila = _rotulo(raiz, 20, Control.PRESET_TOP_LEFT, Rect2(16, 16, 300, 200))
-	_status = _rotulo(raiz, 20, Control.PRESET_TOP_RIGHT, Rect2(-416, 16, 400, 40))
+	_status = _rotulo(raiz, 20, Control.PRESET_TOP_RIGHT, Rect2(-416, 16, 400, 70))
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_dica = _rotulo(raiz, 24, Control.PRESET_BOTTOM_WIDE, Rect2(0, -130, 0, 40))
 	_dica.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -28,7 +29,7 @@ func _ready() -> void:
 	_aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_aviso.add_theme_color_override("font_color", Color(1.0, 0.92, 0.6))
 	var ajuda := _rotulo(raiz, 16, Control.PRESET_BOTTOM_WIDE, Rect2(16, -40, 0, 30))
-	ajuda.text = "WASD andar · Shift correr · Espaço pular · Mouse câmera · Roda zoom · E interagir · Esc soltar mouse"
+	ajuda.text = "WASD andar · Shift correr · Espaço pular · Mouse câmera · Roda zoom · E interagir · T acelerar o tempo · Esc soltar mouse"
 	ajuda.modulate.a = 0.75
 
 	_montar_loja(raiz)
@@ -37,8 +38,9 @@ func _ready() -> void:
 	_atualizar_mochila()
 
 
-func conectar(jogador: Node, merc: Node) -> void:
+func conectar(jogador: Node, merc: Node, ciclo_dia: Node) -> void:
 	mercador = merc
+	ciclo = ciclo_dia
 	jogador.alvo_mudou.connect(func(t: String) -> void: _dica.text = t)
 	merc.partiu.connect(fechar_loja)
 
@@ -66,6 +68,8 @@ func _rotulo(pai: Control, tamanho: int, ancora: Control.LayoutPreset, caixa: Re
 func _process(delta: float) -> void:
 	if mercador:
 		_status.text = mercador.status()
+		if ciclo:
+			_status.text = ciclo.nome_periodo() + "\n" + _status.text
 	if _tempo_aviso > 0.0:
 		_tempo_aviso -= delta
 		_aviso.modulate.a = clampf(_tempo_aviso, 0.0, 1.0)

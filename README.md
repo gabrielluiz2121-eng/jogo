@@ -27,6 +27,7 @@ Na primeira vez o Godot leva alguns segundos “importando” o projeto. É norm
 | Mouse | Girar a câmera |
 | Roda do mouse | Aproximar/afastar a câmera |
 | E | Interagir (colher, usar o varal, negociar, construir) |
+| T (segurar) | Acelerar o tempo, para ver o dia virar noite |
 | Esc | Soltar o mouse / fechar a loja (clique na tela para prender de novo) |
 
 ## O que tem neste protótipo
@@ -44,6 +45,25 @@ Na primeira vez o Godot leva alguns segundos “importando” o projeto. É norm
 
 As flores colhidas nascem de novo depois de 40 segundos.
 
+## Visual de aquarela e nanquim
+
+O jogo agora tenta se aproximar das artes conceituais:
+
+- **Filtro de pintura** na tela inteira (`shaders/tela_aquarela.gdshader`): contorno de nanquim
+  que treme e falha como pincel, tinta acumulada nas bordas das cores, textura de papel e
+  um leve "sangramento" da aquarela.
+- **Material de aquarela** nos objetos (`shaders/aquarela.gdshader`): cores chapadas em duas
+  faixas de luz, sombras azuladas e manchas de pigmento. As rochas são deformadas para
+  parecerem irregulares.
+- **Céu pintado** (`shaders/ceu.gdshader`) com raios de sol, manchas de nuvem e estrelas.
+- **Mar de nuvens** em várias camadas que andam com o vento (`shaders/nuvens.gdshader`),
+  neblina densa lá embaixo e picos de pedra no horizonte.
+- **Ciclo de dia e noite** (`scripts/ciclo.gd`): amanhecer dourado, dia, entardecer e noite
+  azul com estrelas; lanternas e flores brilham mais à noite. Um dia dura 8 minutos.
+- Pinheiros tortos com copas achatadas, raízes penduradas sob as ilhas e cachoeiras.
+
+Para comparar com e sem o filtro, mude `ATIVO` para `false` em `scripts/estilo.gd`.
+
 ## Onde ajustar o ritmo
 
 Os números que mudam o “sentir” do jogo estão no começo dos scripts:
@@ -54,6 +74,8 @@ Os números que mudam o “sentir” do jogo estão no começo dos scripts:
 - `scripts/flor.gd`: tempo para a flor nascer de novo.
 - `scripts/ponte.gd`: custo da ponte.
 - `scripts/jogador.gd`: velocidade, pulo e sensibilidade do mouse.
+- `scripts/ciclo.gd`: duração do dia, hora inicial e as cores de cada parte do dia.
+- `scripts/estilo.gd`: liga/desliga o filtro e a cor do nanquim.
 
 ## Como o código está organizado
 
@@ -72,6 +94,9 @@ scripts/
   interagivel.gd   base de tudo que usa a tecla E
   flor.gd, secador.gd, mercador.gd, ponte.gd
   util.gd          ajudantes para criar formas
+  ciclo.gd         dia e noite
+  estilo.gd        liga o filtro de aquarela na câmera
+shaders/           aquarela, filtro da tela, céu, nuvens e cachoeira
 ```
 
 ## Perguntas para testar
