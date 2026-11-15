@@ -60,6 +60,7 @@ O jogo agora tenta se aproximar das artes conceituais:
   neblina densa lá embaixo e picos de pedra no horizonte.
 - **Ciclo de dia e noite** (`scripts/ciclo.gd`): amanhecer dourado, dia, entardecer e noite
   azul com estrelas; lanternas e flores brilham mais à noite. Um dia dura 8 minutos.
+- **Camponês** baseado na folha de conceito (`scripts/campones.gd`): chapéu cônico, túnica com lapela de linho, faixa, calça dobrada, sandálias e cesto de bambu com ferramentas e plantas. Tem animação de andar, correr, pular e colher.
 - Pinheiros tortos com copas achatadas, raízes penduradas sob as ilhas e cachoeiras.
 
 Para comparar com e sem o filtro, mude `ATIVO` para `false` em `scripts/estilo.gd`.
