@@ -1,0 +1,6 @@
+# Pasta de cache que o Godot recria sozinho
+.godot/
+*.tmp
+/android/
+export_presets.cfg
+.DS_Store
