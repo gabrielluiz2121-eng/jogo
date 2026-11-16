@@ -3,9 +3,12 @@ extends CharacterBody3D
 
 const U = preload("res://scripts/util.gd")
 const Campones = preload("res://scripts/campones.gd")
+const Personagem = preload("res://scripts/personagem.gd")
+## true = camponês do Meshy/Mixamo; false = boneco simples feito de formas.
+const USAR_MODELO_3D := true
 
-const VEL_ANDAR := 5.0
-const VEL_CORRER := 8.5
+const VEL_ANDAR := 2.8
+const VEL_CORRER := 6.5
 const FORCA_PULO := 5.5
 const SENSIBILIDADE_MOUSE := 0.003
 const ALTURA_QUEDA := -35.0  # abaixo disso, volta para o último chão seguro
@@ -40,7 +43,7 @@ func _montar() -> void:
 	add_child(col)
 
 	# O camponês (modelo e animação ficam em scripts/campones.gd).
-	modelo = Campones.new()
+	modelo = Personagem.new() if USAR_MODELO_3D else Campones.new()
 	add_child(modelo)
 
 	pivo = Node3D.new()

@@ -60,10 +60,22 @@ O jogo agora tenta se aproximar das artes conceituais:
   neblina densa lá embaixo e picos de pedra no horizonte.
 - **Ciclo de dia e noite** (`scripts/ciclo.gd`): amanhecer dourado, dia, entardecer e noite
   azul com estrelas; lanternas e flores brilham mais à noite. Um dia dura 8 minutos.
-- **Camponês** baseado na folha de conceito (`scripts/campones.gd`): chapéu cônico, túnica com lapela de linho, faixa, calça dobrada, sandálias e cesto de bambu com ferramentas e plantas. Tem animação de andar, correr, pular e colher.
+- **Camponês 3D** feito no Meshy e animado no Mixamo (`personagem/`, `scripts/personagem.gd`):
+  parado, andar, correr, pular e colher. Para voltar ao boneco simples, mude
+  `USAR_MODELO_3D` para `false` em `scripts/jogador.gd`.
+- Boneco simples antigo (formas) baseado na folha de conceito (`scripts/campones.gd`): chapéu cônico, túnica com lapela de linho, faixa, calça dobrada, sandálias e cesto de bambu com ferramentas e plantas. Tem animação de andar, correr, pular e colher.
 - Pinheiros tortos com copas achatadas, raízes penduradas sob as ilhas e cachoeiras.
 
 Para comparar com e sem o filtro, mude `ATIVO` para `false` em `scripts/estilo.gd`.
+
+## Trocar ou adicionar animações do personagem
+
+1. Baixe do Mixamo em **FBX, With Skin** (andar e correr com **In Place**).
+2. Coloque em `personagem/fontes/` com os nomes `parado.fbx`, `andar.fbx`, `correr.fbx`,
+   `pular.fbx` e `colher.fbx` (essa pasta não vai para o GitHub porque os arquivos são grandes).
+3. No terminal, dentro da pasta do projeto, rode:
+   `godot --headless --import` e depois `godot --headless -s res://ferramentas/importar_animacoes.gd`.
+   Isso gera `personagem/animacoes.res`, que o jogo usa.
 
 ## Onde ajustar o ritmo
 

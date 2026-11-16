@@ -55,6 +55,9 @@ uniform vec3 cor_sombra : source_color = vec3(0.36, 0.42, 0.6);
 uniform bool manchas_locais = false;
 // Padrao de palha/bambu trancado (cesto, chapeu, sandalias). 0 = desligado.
 uniform float trama = 0.0;
+// Textura pintada (modelos vindos do Meshy).
+uniform sampler2D textura : source_color, filter_linear_mipmap;
+uniform bool usa_textura = false;
 
 varying vec3 pos_mundo;
 varying vec3 pos_local;
@@ -80,7 +83,11 @@ void fragment() {
 	float n = fbm3(p * 0.12);
 	float n2 = fbm3(p * 0.6 + 11.0);
 	float grao = ruido3(p * 4.0);
-	vec3 c = cor.rgb * (1.0 + (n - 0.5) * manchas * 2.4 + (n2 - 0.5) * manchas + (grao - 0.5) * 0.06);
+	vec3 base = cor.rgb;
+	if (usa_textura) {
+		base *= texture(textura, UV).rgb;
+	}
+	vec3 c = base * (1.0 + (n - 0.5) * manchas * 2.4 + (n2 - 0.5) * manchas + (grao - 0.5) * 0.06);
 	// Manchas amareladas/azuladas, como pigmentos misturados na agua.
 	c = mix(c, c * vec3(1.08, 1.04, 0.85), smoothstep(0.55, 0.75, n) * 0.6);
 	c = mix(c, c * vec3(0.88, 0.95, 1.08), smoothstep(0.45, 0.25, n) * 0.5);
@@ -93,7 +100,7 @@ void fragment() {
 	ALBEDO = clamp(c, 0.0, 1.0);
 	ROUGHNESS = 1.0;
 	if (brilho > 0.0) {
-		EMISSION = cor.rgb * brilho;
+		EMISSION = base * brilho;
 	}
 }
 
