@@ -115,8 +115,8 @@ func _ready() -> void:
 	_casa()
 	_espalhar_pedras(terreno_a, 10)
 	_espalhar_pedras(terreno_b, 5)
-	_espalhar_arvores(terreno_a, 3.0, 28)
-	_espalhar_arvores(terreno_b, 2.0, 12)
+	_espalhar_arvores(terreno_a, 3.0, 20)
+	_espalhar_arvores(terreno_b, 2.0, 9)
 
 	# --- Flores mágicas ---
 	_espalhar_flores(terreno_a, 3.0, 16, COR_FLOR_A)
@@ -411,12 +411,26 @@ func _sortear_pontos(t: Node3D, r_min: float, n: int, folga: float) -> Array[Vec
 
 
 func _espalhar_arvores(t: Node3D, r_min: float, n: int) -> void:
-	for p in _sortear_pontos(t, r_min, n, 1.6):
+	for p in _sortear_pontos(t, r_min, n, 2.6):
 		_pinheiro(p - Vector3(0, 0.1, 0), true)
 
 
-## Pinheiro torto de pintura chinesa: tronco em 2 partes e copas achatadas.
+## Pinheiro torto de pintura chinesa. Perto do jogador usa o modelo do Meshy;
+## nos picos distantes (com_colisao = false) usa a versão simples, mais leve.
 func _pinheiro(p: Vector3, com_colisao: bool) -> void:
+	if com_colisao:
+		var alt := _rng.randf_range(3.6, 5.6)
+		var tinta := Color(1.05, 1.08, 1.0).lerp(Color(1.15, 1.2, 0.95), _rng.randf())
+		var arvore := M.criar("pinheiro", alt, 1, tinta)
+		arvore.position = p - Vector3(0, 0.15, 0)
+		arvore.rotation.y = _rng.randf() * TAU
+		add_child(arvore)
+		add_child(U.solido(U.forma_cilindro(0.4, 2.5), Transform3D(Basis(), p + Vector3(0, 1.25, 0))))
+		return
+	_pinheiro_simples(p)
+
+
+func _pinheiro_simples(p: Vector3) -> void:
 	var alt := _rng.randf_range(2.5, 4.5)
 	var inclina := Vector3(_rng.randf_range(-0.3, 0.3), 0, _rng.randf_range(-0.3, 0.3))
 	var t1 := U.malha(U.cilindro(0.2, 0.32, alt * 0.6, 6), COR_MADEIRA)
@@ -429,18 +443,15 @@ func _pinheiro(p: Vector3, com_colisao: bool) -> void:
 	add_child(t2)
 	var topo := meio + Basis.from_euler(inclina) * Vector3(0, alt * 0.55, 0)
 	var verde := COR_PINHEIRO.lerp(COR_PINHEIRO_CLARO, _rng.randf())
-	var copas := _rng.randi_range(3, 5)
-	for i in copas:
+	for i in _rng.randi_range(3, 5):
 		var raio := _rng.randf_range(0.9, 1.6) * (1.0 - i * 0.12)
-		var desloc := Vector3(_rng.randf_range(-1.2, 1.2), -i * 0.0 + _rng.randf_range(-0.9, 0.4), _rng.randf_range(-1.2, 1.2))
+		var desloc := Vector3(_rng.randf_range(-1.2, 1.2), _rng.randf_range(-0.9, 0.4), _rng.randf_range(-1.2, 1.2))
 		if i == 0:
 			desloc = Vector3.ZERO
 		var copa := U.malha(U.esfera(raio, 9), verde.lightened(_rng.randf_range(0.0, 0.12)))
 		copa.position = topo + desloc + Vector3(0, 0.2, 0)
 		copa.scale = Vector3(1.5, 0.45, 1.5)
 		add_child(copa)
-	if com_colisao:
-		add_child(U.solido(U.forma_cilindro(0.35, alt), Transform3D(Basis(), p + Vector3(0, alt * 0.5, 0))))
 
 
 func _espalhar_flores(t: Node3D, r_min: float, n: int, cor: Color) -> void:

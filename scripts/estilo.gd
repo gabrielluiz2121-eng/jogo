@@ -3,8 +3,13 @@ extends RefCounted
 ## Para ver o jogo "cru" (sem filtro), mude ATIVO para false.
 
 const ATIVO := true
-## Cor do nanquim dos contornos.
-const COR_TINTA := Color(0.08, 0.07, 0.08)
+## Contornos de nanquim. Para linhas mais fortes, aumente FORCA_CONTORNO
+## (0 = sem linhas, 1 = bem marcadas) ou escureça COR_TINTA.
+const COR_TINTA := Color(0.3, 0.27, 0.25)  # sépia acinzentado, não preto
+const FORCA_CONTORNO := 0.5
+const ESPESSURA := 1.15  # pixels
+## Linhas de dobra (dentro dos objetos). 0 = só o contorno de fora.
+const FORCA_DOBRAS := 0.2
 const U = preload("res://scripts/util.gd")
 const SHADER_TELA = preload("res://shaders/tela_aquarela.gdshader")
 
@@ -18,7 +23,9 @@ static func aplicar(camera: Camera3D) -> ShaderMaterial:
 	mat.shader = SHADER_TELA
 	mat.set_shader_parameter("compatibilidade", U.modo_compatibilidade())
 	mat.set_shader_parameter("cor_tinta", COR_TINTA)
-	mat.set_shader_parameter("forca_contorno", 0.9)
+	mat.set_shader_parameter("forca_contorno", FORCA_CONTORNO)
+	mat.set_shader_parameter("espessura", ESPESSURA)
+	mat.set_shader_parameter("forca_dobras", FORCA_DOBRAS)
 	# Desenha antes das nuvens transparentes, para elas ficarem por cima.
 	mat.render_priority = -128
 	var mi := MeshInstance3D.new()

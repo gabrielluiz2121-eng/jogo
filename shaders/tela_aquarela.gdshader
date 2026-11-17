@@ -49,7 +49,8 @@ uniform vec3 cor_tinta : source_color = vec3(0.12, 0.11, 0.12);
 uniform vec3 cor_papel : source_color = vec3(0.97, 0.94, 0.87);
 uniform float espessura = 1.6;          // grossura da linha (pixels)
 uniform float forca_contorno = 0.85;
-uniform float distancia_some = 220.0;    // linhas somem longe, como na pintura
+uniform float forca_dobras = 0.6;       // linhas de dobra dentro dos objetos
+uniform float distancia_some = 150.0;    // linhas somem longe, como na pintura
 uniform float forca_papel = 0.16;
 uniform float sangramento = 0.0012;      // quanto a tinta "escorre"
 uniform float borda_tinta = 0.35;
@@ -92,7 +93,7 @@ void fragment() {
 	float dd = dist_linear(uvl + vec2(0.0, o.y), INV_PROJECTION_MATRIX);
 	float salto = max(max(abs(dl - dc), abs(dr - dc)), max(abs(du - dc), abs(dd - dc))) / dc;
 	float dobra = abs(dl + dr + du + dd - 4.0 * dc) / dc;
-	float linha = max(smoothstep(0.035, 0.09, salto), smoothstep(0.02, 0.06, dobra) * 0.6);
+	float linha = max(smoothstep(0.04, 0.12, salto), smoothstep(0.03, 0.09, dobra) * forca_dobras);
 	linha *= 1.0 - smoothstep(distancia_some * 0.4, distancia_some, dc);
 	// Falhas no traco, como pincel seco.
 	linha *= smoothstep(0.08, 0.3, ruido2(pos_px * 0.05));
@@ -118,7 +119,9 @@ void fragment() {
 	c *= mix(vec3(1.0), cor_papel, 0.5);
 
 	// --- Nanquim por cima ---
-	c = mix(c, cor_tinta, clamp(linha, 0.0, 1.0) * forca_contorno);
+	// A tinta se mistura com a cor de baixo (fica mais escura, sem virar preto chapado).
+	vec3 tinta = mix(cor_tinta, c * cor_tinta * 2.2, 0.4);
+	c = mix(c, tinta, clamp(linha, 0.0, 1.0) * forca_contorno);
 
 	// Vinheta suave, como a borda de uma folha.
 	float vinheta = smoothstep(1.25, 0.55, length((uv - 0.5) * vec2(1.3, 1.0)));

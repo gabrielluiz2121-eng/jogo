@@ -50,22 +50,31 @@ static func _transform_relativo(raiz: Node3D, no: Node3D) -> Transform3D:
 	return t
 
 
-## Troca o material do Meshy pelo de aquarela, mantendo a textura pintada.
+## Troca o material do Meshy pelo de aquarela, mantendo a textura pintada
+## (ou as cores pintadas nos vértices, como nas copas do pinheiro).
 static func aquarela(cena: Node, cor: Color, brilho: float) -> void:
 	for mi in cena.find_children("*", "MeshInstance3D", true, false):
 		var malha: MeshInstance3D = mi
-		var antigo := malha.get_active_material(0)
-		var novo := ShaderMaterial.new()
-		novo.shader = SHADER_AQUARELA
-		novo.set_shader_parameter("cor", cor)
-		novo.set_shader_parameter("manchas", 0.06)
-		novo.set_shader_parameter("manchas_locais", true)
-		novo.set_shader_parameter("brilho", brilho)
-		if antigo is BaseMaterial3D and antigo.albedo_texture:
-			novo.set_shader_parameter("textura", antigo.albedo_texture)
-			novo.set_shader_parameter("usa_textura", true)
-		malha.material_override = novo
-		if brilho > 0.0:
+		var n := malha.mesh.get_surface_count()
+		for s in n:
+			var antigo := malha.get_active_material(s)
+			var novo := ShaderMaterial.new()
+			novo.shader = SHADER_AQUARELA
+			novo.set_shader_parameter("cor", cor)
+			novo.set_shader_parameter("manchas", 0.06)
+			novo.set_shader_parameter("manchas_locais", true)
+			novo.set_shader_parameter("brilho", brilho)
+			if antigo is BaseMaterial3D:
+				if antigo.albedo_texture:
+					novo.set_shader_parameter("textura", antigo.albedo_texture)
+					novo.set_shader_parameter("usa_textura", true)
+				if antigo.vertex_color_use_as_albedo:
+					novo.set_shader_parameter("usa_cor_vertice", true)
+			if n == 1:
+				malha.material_override = novo
+			else:
+				malha.set_surface_override_material(s, novo)
+		if brilho > 0.0 and n == 1:
 			malha.set_meta("brilho_base", brilho)
 			malha.add_to_group("brilha_a_noite")
 
@@ -75,3 +84,7 @@ static func tingir(modelo: Node, cor: Color) -> void:
 	for mi in modelo.find_children("*", "MeshInstance3D", true, false):
 		if mi.material_override is ShaderMaterial:
 			mi.material_override.set_shader_parameter("cor", cor)
+		for s in mi.mesh.get_surface_count():
+			var m = mi.get_surface_override_material(s)
+			if m is ShaderMaterial:
+				m.set_shader_parameter("cor", cor)
