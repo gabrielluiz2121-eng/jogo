@@ -2,6 +2,7 @@ extends "res://scripts/interagivel.gd"
 ## Flor mágica: aperte E para colher. Ela volta a crescer depois de um tempo.
 
 const U = preload("res://scripts/util.gd")
+const M = preload("res://scripts/modelos.gd")
 
 ## Segundos para a flor nascer de novo depois de colhida.
 const TEMPO_PARA_CRESCER := 40.0
@@ -10,17 +11,22 @@ var cor := Color(0.95, 0.35, 0.75)
 var colhida := false
 var _tempo := 0.0
 var _visual: Node3D
-var _botao: MeshInstance3D
+var _botao: Node3D
+## Qual dos dois modelos de flor usar (1 ou 2). 0 = sorteia.
+var variante := 0
 
 
 func _ready() -> void:
 	raio_interacao = 1.8
 	_visual = Node3D.new()
 	add_child(_visual)
-	_visual.add_child(U.malha(U.cilindro(0.03, 0.04, 0.6, 6), Color(0.3, 0.6, 0.25), Vector3(0, 0.3, 0)))
-	_visual.add_child(U.malha(U.caixa(Vector3(0.25, 0.02, 0.1)), Color(0.35, 0.65, 0.3), Vector3(0.08, 0.2, 0)))
-	_botao = U.malha(U.esfera(0.16, 8), cor, Vector3(0, 0.65, 0), 0.8)
+	if variante == 0:
+		variante = 1 + randi() % 2
+	# Modelo do Meshy (pétalas azuladas); `cor` tinge a flor e ela brilha de leve.
+	var tinta := Color(1.1, 1.1, 1.1).lerp(cor * 1.3, 0.45)
+	_botao = M.criar("flor%d" % variante, randf_range(0.6, 0.8), 1, tinta, 0.25)
 	_visual.add_child(_botao)
+	_visual.rotation.y = randf() * TAU
 	_tempo = randf() * TAU
 
 
@@ -32,8 +38,8 @@ func _process(delta: float) -> void:
 			_visual.visible = true
 	else:
 		# Pequeno balanço "mágico".
-		_botao.position.y = 0.65 + sin(_tempo * 2.0) * 0.04
-		_visual.rotation.y += delta * 0.5
+		_botao.rotation.z = sin(_tempo * 1.7) * 0.06
+		_botao.rotation.x = sin(_tempo * 1.3 + 1.0) * 0.05
 
 
 func ponto_interacao() -> Vector3:

@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://b0md12luqs3hu"
+path="res://.godot/imported/flor2_1.jpg-e58373e347918b91ed3715b099cee0ab.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "28810769bbf141486aa6f4f1df369ff0"
+}
+
+[deps]
+
+source_file="res://modelos/flor2_1.jpg"
+dest_files=["res://.godot/imported/flor2_1.jpg-e58373e347918b91ed3715b099cee0ab.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

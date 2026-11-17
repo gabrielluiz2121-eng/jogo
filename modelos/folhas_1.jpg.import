@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://c14nu3qnocugg"
+path="res://.godot/imported/folhas_1.jpg-79aa5c511d68d9d72743ce6c2f492e31.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "2b8106574beb0d50f2a95d43bce19dd9"
+}
+
+[deps]
+
+source_file="res://modelos/folhas_1.jpg"
+dest_files=["res://.godot/imported/folhas_1.jpg-79aa5c511d68d9d72743ce6c2f492e31.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

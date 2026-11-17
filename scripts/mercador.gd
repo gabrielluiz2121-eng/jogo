@@ -1,9 +1,10 @@
 extends "res://scripts/interagivel.gd"
-## Barco mercador voador (junco chinês, em formas simples).
+## Barco mercador voador (junco chinês, modelo do Meshy).
 ## Chega de tempos em tempos, compra seu chá e entrega o que você encomendou.
 ## Fica na origem do mundo; `ponto_cais` e `pos_atracado` são posições do mundo.
 
 const U = preload("res://scripts/util.gd")
+const M = preload("res://scripts/modelos.gd")
 
 ## --- Ajuste o ritmo do jogo aqui ---
 const PRIMEIRA_VISITA := 20.0  # segundos até a primeira chegada
@@ -35,28 +36,20 @@ func _ready() -> void:
 
 func _montar_barco() -> Node3D:
 	var b := Node3D.new()
-	var casco := Color(0.45, 0.3, 0.2)
-	var vela := Color(0.75, 0.35, 0.25)
-	# Casco (a frente do barco aponta para -Z).
-	b.add_child(U.malha(U.caixa(Vector3(3.2, 1.2, 9.0)), casco, Vector3(0, 0, 0)))
-	b.add_child(U.malha(U.caixa(Vector3(3.0, 0.9, 2.0)), casco.darkened(0.15), Vector3(0, 0.9, 3.6)))  # popa alta
-	var proa := U.malha(U.caixa(Vector3(3.0, 0.8, 2.2)), casco, Vector3(0, 0.55, -4.6))
-	proa.rotation_degrees.x = 20
-	b.add_child(proa)
-	b.add_child(U.malha(U.caixa(Vector3(2.8, 0.1, 8.0)), Color(0.65, 0.5, 0.32), Vector3(0, 0.62, 0)))  # convés
-	# Dois mastros com velas de junco (com ripas horizontais).
-	for m in [[-1.2, 6.5, 4.0], [2.2, 4.5, 2.8]]:
-		var z: float = m[0]
-		var altura: float = m[1]
-		var largura: float = m[2]
-		b.add_child(U.malha(U.cilindro(0.12, 0.15, altura, 6), casco.darkened(0.3), Vector3(0, 0.6 + altura * 0.5, z)))
-		b.add_child(U.malha(U.caixa(Vector3(largura, altura * 0.75, 0.06)), vela, Vector3(0, 1.4 + altura * 0.45, z + 0.15)))
-		for i in 5:
-			var y := 1.4 + altura * 0.1 + i * altura * 0.15
-			b.add_child(U.malha(U.caixa(Vector3(largura + 0.2, 0.06, 0.12)), casco.darkened(0.4), Vector3(0, y, z + 0.2)))
-	# Lanternas.
-	for p in [Vector3(1.3, 1.8, 4.5), Vector3(-1.3, 1.8, 4.5)]:
-		b.add_child(U.malha(U.esfera(0.25, 8), Color(1.0, 0.35, 0.2), p, 1.5))
+	# Junco voador (modelo do Meshy). No arquivo a proa aponta para -X;
+	# aqui ela precisa apontar para -Z. O convés fica em y = 0.62.
+	var modelo := M.criar("barco", 10.0, 0)
+	modelo.rotation.y = -PI * 0.5
+	modelo.position.y = 0.62 - 1.9
+	b.add_child(modelo)
+	# Lanternas brilhando à noite (as do modelo são só pintura).
+	for p in [Vector3(1.3, 2.4, 3.6), Vector3(-1.3, 2.4, 3.6)]:
+		var luz := OmniLight3D.new()
+		luz.position = p
+		luz.light_color = Color(1.0, 0.55, 0.3)
+		luz.light_energy = 0.6
+		luz.omni_range = 4.0
+		b.add_child(luz)
 	# A criatura mercadora (placeholder: corpo, cabeça e orelhas).
 	var criatura := Node3D.new()
 	criatura.position = Vector3(-1.0, 0.65, 1.0)

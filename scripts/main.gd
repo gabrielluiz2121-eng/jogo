@@ -13,6 +13,7 @@ const Hud = preload("res://scripts/hud.gd")
 const Ciclo = preload("res://scripts/ciclo.gd")
 const Estilo = preload("res://scripts/estilo.gd")
 const Terreno = preload("res://scripts/terreno.gd")
+const M = preload("res://scripts/modelos.gd")
 
 const COR_GRAMA := Color(0.6, 0.66, 0.38)
 const COR_GRAMA_B := Color(0.56, 0.63, 0.36)
@@ -43,12 +44,14 @@ const RAMPA_CIMA := Vector3(0.4, ALTURA_PLATO, -6)
 var TRILHAS_A: Array = [
 	[Vector3(0, 0, 21), Vector3(0, 0, 12), Vector3(4, 0, 4), Vector3(10, 0, -2), RAMPA_BAIXO, RAMPA_CIMA, Vector3(-8, 0, -6), Vector3(-12, 0, -10)],
 	[Vector3(4, 0, 4), Vector3(12, 0, 2), Vector3(21, 0, 0)],
+	[Vector3(1.2, 0, 9.6), Vector3(-4.0, 0, 6.6)],  # até a casinha de chá
 ]
 var TRILHAS_B: Array = [
 	[Vector3(38, 0, 0), Vector3(46, 0, 2), Vector3(54, 0, -2), Vector3(60, 0, 4)],
 ]
 ## Lugares que precisam de chão plano (x, z, raio): início, varal, cais, ponte.
-const PLANOS_A := [Vector3(0, 14, 3.5), Vector3(7, 10, 4.0), Vector3(0, 20, 4.0), Vector3(20, 0, 3.5)]
+const CASA := Vector3(-7, 0, 5)
+const PLANOS_A := [Vector3(-7, 5, 4.5), Vector3(0, 14, 3.5), Vector3(7, 10, 4.0), Vector3(0, 20, 4.0), Vector3(20, 0, 3.5)]
 const PLANOS_B := [Vector3(39.5, 0, 3.5), Vector3(58, 6, 3.0)]
 
 var terreno_a: Node3D
@@ -109,6 +112,9 @@ func _ready() -> void:
 	_cachoeira(terreno_a, deg_to_rad(130))
 
 	# --- Árvores e pedras ---
+	_casa()
+	_espalhar_pedras(terreno_a, 10)
+	_espalhar_pedras(terreno_b, 5)
 	_espalhar_arvores(terreno_a, 3.0, 28)
 	_espalhar_arvores(terreno_b, 2.0, 12)
 
@@ -311,27 +317,61 @@ func _inclinacao(t: Node3D, x: float, z: float) -> float:
 
 
 func _cais() -> void:
+	# Colisão: uma tábua lisa com o topo em y = 0.
 	var tam := Vector3(3.0, 0.4, 9.0)
-	var pos := Vector3(0, -0.2, 24.5)
-	add_child(U.malha(U.caixa(tam), COR_MADEIRA, pos))
-	add_child(U.solido(U.forma_caixa(tam), Transform3D(Basis(), pos)))
-	for z in [21.0, 24.5, 28.5]:
-		for x in [-1.4, 1.4]:
-			add_child(U.malha(U.cilindro(0.15, 0.15, 3.0, 6), COR_MADEIRA.darkened(0.2), Vector3(x, -0.6, z)))
-	# Lanterna no fim do cais.
-	add_child(U.malha(U.cilindro(0.08, 0.08, 2.2, 6), COR_MADEIRA.darkened(0.3), Vector3(-1.2, 1.1, 28.6)))
-	add_child(U.malha(U.esfera(0.25, 8), Color(1.0, 0.4, 0.2), Vector3(-1.2, 2.3, 28.6), 1.5))
+	add_child(U.solido(U.forma_caixa(tam), Transform3D(Basis(), Vector3(0, -0.2, 24.5))))
+	# Modelo do Meshy: comprido em X no arquivo, aqui vai na direção +Z,
+	# com o poste da lanterna na ponta. O piso fica 1,55 m acima do pé dos postes.
+	var modelo := M.criar("cais", 9.5, 0)
+	modelo.rotation.y = -PI * 0.5
+	modelo.position = Vector3(0, -1.55, 24.6)
+	add_child(modelo)
 	_livre(Vector3(0, 0, 21), 3.0)
 
 
+## Casinha de chá (modelo do Meshy) com a porta virada para a trilha.
+func _casa() -> void:
+	var pos := _no_chao(CASA)
+	var casa := M.criar("casa", 4.6, 0)
+	casa.position = pos - Vector3(0, 0.05, 0)
+	casa.rotation.y = deg_to_rad(70)
+	add_child(casa)
+	add_child(U.solido(U.forma_caixa(Vector3(4.0, 4.0, 3.8)), Transform3D(Basis(Vector3.UP, casa.rotation.y), pos + Vector3(0, 2.0, 0))))
+	_livre(pos, 4.0)
+	# Lanternas: uma perto da casa e outra perto do varal.
+	_lanterna(pos + Basis(Vector3.UP, casa.rotation.y) * Vector3(1.8, 0, 2.9))
+	_lanterna(_no_chao(Vector3(8.6, 0, 12.4)))
+
+
+## Poste de madeira com uma lanterna de papel que brilha à noite.
+func _lanterna(pos: Vector3) -> void:
+	add_child(U.malha(U.cilindro(0.07, 0.09, 2.3, 6), COR_MADEIRA.darkened(0.2), pos + Vector3(0, 1.15, 0)))
+	var lanterna := M.criar("lanterna", 0.9, 1, Color(1.15, 1.1, 1.05), 0.6)
+	lanterna.position = pos + Vector3(0, 1.45, 0)
+	add_child(lanterna)
+	_livre(pos, 1.2)
+
+
 func _pedra_mirante(pos: Vector3) -> void:
-	var tam := Vector3(3.0, 1.6, 3.0)
-	var t := Transform3D(Basis(Vector3.UP, 0.4), pos + Vector3(0, 0.8, 0))
-	var m := U.malha(U.caixa(tam), COR_ROCHA)
-	m.transform = t
-	add_child(m)
-	add_child(U.solido(U.forma_caixa(tam), t))
+	var pedra := M.criar("pedra2", 3.2, -1)
+	pedra.position = pos - Vector3(0, 0.1, 0)
+	pedra.rotation.y = 0.4
+	add_child(pedra)
+	var t := Transform3D(Basis(Vector3.UP, 0.4), pos + Vector3(0, 0.6, 0))
+	add_child(U.solido(U.forma_caixa(Vector3(2.8, 1.2, 2.4)), t))
 	_livre(pos, 3.0)
+
+
+## Pedras com musgo espalhadas (4 modelos do Meshy, tamanhos variados).
+func _espalhar_pedras(t: Node3D, n: int) -> void:
+	for p in _sortear_pontos(t, 4.0, n, 2.0):
+		var tam := _rng.randf_range(0.7, 2.4)
+		var pedra := M.criar("pedra%d" % _rng.randi_range(1, 4), tam, -1)
+		pedra.position = p - Vector3(0, tam * 0.08, 0)
+		pedra.rotation.y = _rng.randf() * TAU
+		add_child(pedra)
+		if tam > 1.3:
+			add_child(U.solido(U.forma_cilindro(tam * 0.38, tam * 0.4), Transform3D(Basis(), p + Vector3(0, tam * 0.2, 0))))
 
 
 # ---------------- Espalhar árvores e flores ----------------

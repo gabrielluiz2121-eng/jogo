@@ -90,6 +90,13 @@ Os números que mudam o “sentir” do jogo estão no começo dos scripts:
 - `scripts/ciclo.gd`: duração do dia, hora inicial e as cores de cada parte do dia.
 - `scripts/estilo.gd`: liga/desliga o filtro e a cor do nanquim.
 
+## Modelos do Meshy
+
+A pasta `modelos/` tem as versões leves dos modelos do Meshy: varal, folhas secando,
+flores, pedras, lanterna, cais, casinha de chá e barco. Os originais do Meshy vêm com
+milhões de triângulos, então são reduzidos antes de entrar aqui. Para colocar um modelo
+novo, salve o `.glb` em `modelos/` e use `M.criar("nome", tamanho_em_metros)` no código.
+
 ## Relevo das ilhas
 
 O chão de cada ilha é uma malha gerada por `scripts/terreno.gd`. A altura de cada ponto
@@ -110,6 +117,7 @@ main.tscn          cena principal (só chama scripts/main.gd)
 scripts/
   jogo.gd          estado global: mochila, moedas, encomenda, controles
   main.gd          monta o mundo; _altura_a/_altura_b decidem o relevo das ilhas
+  modelos.gd       carrega os modelos do Meshy (pasta modelos/) no tamanho certo
   terreno.gd       gera a ilha: chão com relevo, borda recortada, penhasco, raízes
   jogador.gd       movimento e câmera
   hud.gd           textos na tela e loja do mercador
