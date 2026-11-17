@@ -90,6 +90,14 @@ Os números que mudam o “sentir” do jogo estão no começo dos scripts:
 - `scripts/ciclo.gd`: duração do dia, hora inicial e as cores de cada parte do dia.
 - `scripts/estilo.gd`: liga/desliga o filtro e a cor do nanquim.
 
+## Relevo das ilhas
+
+O chão de cada ilha é uma malha gerada por `scripts/terreno.gd`. A altura de cada ponto
+vem de `_altura_a` e `_altura_b` em `scripts/main.gd`: morro com paredão de pedra, rampa,
+terraços no sudoeste e colinas suaves. Trilhas e lugares em `PLANOS_A`/`PLANOS_B` ficam
+planos. Encostas íngremes ficam cor de rocha sozinhas, e trilhas, cor de terra.
+Árvores e flores só nascem em chão pouco inclinado.
+
 ## Como o código está organizado
 
 O mundo inteiro é montado por código em `scripts/main.gd` (posições das ilhas, rampa,
@@ -101,7 +109,8 @@ project.godot      configuração do projeto
 main.tscn          cena principal (só chama scripts/main.gd)
 scripts/
   jogo.gd          estado global: mochila, moedas, encomenda, controles
-  main.gd          monta o mundo
+  main.gd          monta o mundo; _altura_a/_altura_b decidem o relevo das ilhas
+  terreno.gd       gera a ilha: chão com relevo, borda recortada, penhasco, raízes
   jogador.gd       movimento e câmera
   hud.gd           textos na tela e loja do mercador
   interagivel.gd   base de tudo que usa a tecla E

@@ -58,6 +58,8 @@ uniform float trama = 0.0;
 // Textura pintada (modelos vindos do Meshy).
 uniform sampler2D textura : source_color, filter_linear_mipmap;
 uniform bool usa_textura = false;
+// Cores pintadas nos vertices (terreno).
+uniform bool usa_cor_vertice = false;
 
 varying vec3 pos_mundo;
 varying vec3 pos_local;
@@ -86,6 +88,9 @@ void fragment() {
 	vec3 base = cor.rgb;
 	if (usa_textura) {
 		base *= texture(textura, UV).rgb;
+	}
+	if (usa_cor_vertice) {
+		base *= COLOR.rgb;
 	}
 	vec3 c = base * (1.0 + (n - 0.5) * manchas * 2.4 + (n2 - 0.5) * manchas + (grao - 0.5) * 0.06);
 	// Manchas amareladas/azuladas, como pigmentos misturados na agua.

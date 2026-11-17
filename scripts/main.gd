@@ -12,6 +12,7 @@ const Jogador = preload("res://scripts/jogador.gd")
 const Hud = preload("res://scripts/hud.gd")
 const Ciclo = preload("res://scripts/ciclo.gd")
 const Estilo = preload("res://scripts/estilo.gd")
+const Terreno = preload("res://scripts/terreno.gd")
 
 const COR_GRAMA := Color(0.6, 0.66, 0.38)
 const COR_GRAMA_B := Color(0.56, 0.63, 0.36)
@@ -35,6 +36,25 @@ const CENTRO_B := Vector3(52, 1, 0)
 const RAIO_B := 14.0
 
 
+const RAMPA_BAIXO := Vector3(10, 0, -6)
+const RAMPA_CIMA := Vector3(0.4, ALTURA_PLATO, -6)
+
+## Trilhas de terra (pintadas no chão e mantidas planas).
+var TRILHAS_A: Array = [
+	[Vector3(0, 0, 21), Vector3(0, 0, 12), Vector3(4, 0, 4), Vector3(10, 0, -2), RAMPA_BAIXO, RAMPA_CIMA, Vector3(-8, 0, -6), Vector3(-12, 0, -10)],
+	[Vector3(4, 0, 4), Vector3(12, 0, 2), Vector3(21, 0, 0)],
+]
+var TRILHAS_B: Array = [
+	[Vector3(38, 0, 0), Vector3(46, 0, 2), Vector3(54, 0, -2), Vector3(60, 0, 4)],
+]
+## Lugares que precisam de chão plano (x, z, raio): início, varal, cais, ponte.
+const PLANOS_A := [Vector3(0, 14, 3.5), Vector3(7, 10, 4.0), Vector3(0, 20, 4.0), Vector3(20, 0, 3.5)]
+const PLANOS_B := [Vector3(39.5, 0, 3.5), Vector3(58, 6, 3.0)]
+
+var terreno_a: Node3D
+var terreno_b: Node3D
+var _ruido_morros := FastNoiseLite.new()
+
 ## Lugares onde não colocar árvores nem flores (x, z, raio).
 var _ocupado: Array[Vector3] = []
 var _rng := RandomNumberGenerator.new()
@@ -45,48 +65,60 @@ func _ready() -> void:
 	_rng.seed = 2026
 	_ambiente()
 
-	# --- Ilha A: chão, morro, rampa e trilha ---
-	_ilha(CENTRO_A, RAIO_A, 16.0, COR_GRAMA)
-	_plato(PLATO_A, RAIO_PLATO, ALTURA_PLATO)
-	var rampa_baixo := Vector3(10, 0, -6)
-	var rampa_cima := Vector3(0.6, ALTURA_PLATO, -6)
-	_rampa(rampa_baixo, rampa_cima, 3.0)
-	# Patamar plano no topo da rampa, para não tropeçar na borda do morro.
-	var patamar := Transform3D(Basis(), Vector3(-0.9, ALTURA_PLATO - 0.3, -6))
-	var tam_patamar := Vector3(3.0, 0.6, 3.0)
-	var m_patamar := U.malha(U.caixa(tam_patamar), COR_TERRA)
-	m_patamar.transform = patamar
-	add_child(m_patamar)
-	add_child(U.solido(U.forma_caixa(tam_patamar), patamar))
-	_trilha([Vector3(0, 0, 21), Vector3(0, 0, 12), Vector3(4, 0, 4), Vector3(10, 0, -2), rampa_baixo])
-	_trilha([Vector3(4, 0, 4), Vector3(12, 0, 2), Vector3(21, 0, 0)])
-	_trilha([rampa_cima, Vector3(-8, ALTURA_PLATO, -6), Vector3(-12, ALTURA_PLATO, -10)])
-	_livre(Vector3(PLATO_A.x, 0, PLATO_A.z), RAIO_PLATO + 1.5)  # chão em volta do morro
-	_livre(Vector3(4, 0, -6), 3.5)
-	_livre(Vector3(8, 0, -6), 3.0)
-	_livre(Vector3(7, 0, 10), 3.5)  # varal
-	_livre(Vector3(0, 0, 14), 3.0)  # início do jogador
+	_ruido_morros.seed = 11
+	_ruido_morros.frequency = 0.07
+
+	# --- Ilha A: relevo com morro, rampa, terraços e colinas ---
+	terreno_a = Terreno.new()
+	terreno_a.centro = CENTRO_A
+	terreno_a.raio = RAIO_A
+	terreno_a.profundidade = 17.0
+	terreno_a.altura = _altura_a
+	terreno_a.trilhas = TRILHAS_A
+	terreno_a.angulos_protegidos = [0.0, PI * 0.5]  # ponte e cais
+	terreno_a.semente = 3
+	add_child(terreno_a)
+	for t in TRILHAS_A:
+		for i in t.size() - 1:
+			for j in 6:
+				_livre(t[i].lerp(t[i + 1], j / 5.0), 2.0)
+	for pl in PLANOS_A:
+		_livre(Vector3(pl.x, 0, pl.y), pl.z)
 
 	# --- Ilha B (um pouco mais alta) ---
-	_ilha(CENTRO_B, RAIO_B, 12.0, COR_GRAMA_B)
-	_trilha([Vector3(39, 1, 0), Vector3(46, 1, 2), Vector3(54, 1, -2), Vector3(60, 1, 4)])
-	_pedra_mirante(CENTRO_B + Vector3(6, 0, 6))
-	_cachoeira(CENTRO_B + Vector3(-4, 0, -RAIO_B + 0.3), 0.0)
-	_cachoeira(Vector3(-14, 0, 16.6), deg_to_rad(-40))
+	terreno_b = Terreno.new()
+	terreno_b.centro = CENTRO_B
+	terreno_b.raio = RAIO_B
+	terreno_b.profundidade = 13.0
+	terreno_b.altura = _altura_b
+	terreno_b.trilhas = TRILHAS_B
+	terreno_b.angulos_protegidos = [PI]
+	terreno_b.semente = 8
+	terreno_b.aneis = 30
+	terreno_b.divisoes = 110
+	terreno_b.cor_grama = COR_GRAMA_B
+	add_child(terreno_b)
+	for t in TRILHAS_B:
+		for i in t.size() - 1:
+			for j in 6:
+				_livre(t[i].lerp(t[i + 1], j / 5.0), 2.0)
+	for pl in PLANOS_B:
+		_livre(Vector3(pl.x, 0, pl.y), pl.z)
+	_pedra_mirante(_no_chao(Vector3(58, 0, 6)))
+	_cachoeira(terreno_b, deg_to_rad(-106))
+	_cachoeira(terreno_a, deg_to_rad(130))
 
 	# --- Árvores e pedras ---
-	_espalhar_arvores(CENTRO_A, 3.0, RAIO_A - 2.0, 22, 0.0)
-	_espalhar_arvores(Vector3(PLATO_A.x, ALTURA_PLATO, PLATO_A.z), 2.0, RAIO_PLATO - 1.5, 5, ALTURA_PLATO, true)
-	_espalhar_arvores(CENTRO_B, 2.0, RAIO_B - 2.0, 12, CENTRO_B.y)
+	_espalhar_arvores(terreno_a, 3.0, 28)
+	_espalhar_arvores(terreno_b, 2.0, 12)
 
 	# --- Flores mágicas ---
-	_espalhar_flores(CENTRO_A, 4.0, RAIO_A - 2.0, 10, 0.0, COR_FLOR_A)
-	_espalhar_flores(Vector3(PLATO_A.x, ALTURA_PLATO, PLATO_A.z), 1.5, RAIO_PLATO - 1.5, 6, ALTURA_PLATO, COR_FLOR_A, true)
-	_espalhar_flores(CENTRO_B, 2.0, RAIO_B - 2.0, 16, CENTRO_B.y, COR_FLOR_B)
+	_espalhar_flores(terreno_a, 3.0, 16, COR_FLOR_A)
+	_espalhar_flores(terreno_b, 2.0, 16, COR_FLOR_B)
 
 	# --- Varal de secagem ---
 	var secador := Secador.new()
-	secador.position = Vector3(7, 0, 10)
+	secador.position = _no_chao(Vector3(7, 0, 10))
 	secador.rotation_degrees.y = -30
 	add_child(secador)
 
@@ -105,7 +137,7 @@ func _ready() -> void:
 
 	# --- Jogador e interface ---
 	var jogador := Jogador.new()
-	jogador.position = Vector3(0, 0.2, 14)
+	jogador.position = _no_chao(Vector3(0, 0, 14)) + Vector3(0, 0.2, 0)
 	add_child(jogador)
 	var hud := Hud.new()
 	add_child(hud)
@@ -204,58 +236,78 @@ func _ambiente() -> void:
 # ---------------- Peças do terreno ----------------
 
 
-## Ilha flutuante: disco de grama em cima, rocha afinando para baixo.
-func _ilha(centro: Vector3, raio: float, profundidade: float, cor: Color) -> void:
-	var lados := 20
-	add_child(U.malha(U.cilindro(raio, raio, 2.0, lados), cor, centro - Vector3(0, 1.0, 0)))
-	# Faixa de musgo na borda e rocha irregular afinando para baixo.
-	add_child(U.malha(U.cilindro(raio * 1.01, raio * 0.96, 2.5, lados, 2), COR_MUSGO, centro - Vector3(0, 1.6, 0), 0.0, 0.6))
-	add_child(U.malha(U.cilindro(raio * 0.96, raio * 0.12, profundidade, lados, 8), COR_ROCHA, centro - Vector3(0, 2.6 + profundidade * 0.5, 0), 0.0, 1.6))
-	add_child(U.solido(U.forma_cilindro(raio, 2.0), Transform3D(Basis(), centro - Vector3(0, 1.0, 0))))
-	# Raízes e cipós pendurados embaixo da ilha.
-	for i in int(raio * 1.2):
-		var ang := _rng.randf() * TAU
-		var r := raio * _rng.randf_range(0.5, 0.93)
-		var comprimento := _rng.randf_range(3.0, 9.0)
-		var topo := centro + Vector3(cos(ang) * r, -2.5 - (1.0 - r / raio) * profundidade * 0.6, sin(ang) * r)
-		var raiz := U.malha(U.cilindro(0.12, 0.03, comprimento, 4), COR_MUSGO.darkened(0.35))
-		raiz.position = topo - Vector3(0, comprimento * 0.5, 0)
-		raiz.rotation = Vector3(_rng.randf_range(-0.25, 0.25), 0, _rng.randf_range(-0.25, 0.25))
-		add_child(raiz)
+## Altura do chão da ilha A em (x, z).
+## Chão base em 0, morro com paredão de pedra, rampa até ele, terraços no
+## sudoeste e colinas suaves onde não há trilhas nem construções.
+func _altura_a(x: float, z: float) -> float:
+	var p := Vector2(x, z)
+	# Morro (plato) com borda irregular e paredão íngreme.
+	var dp := p.distance_to(Vector2(PLATO_A.x, PLATO_A.z))
+	dp += _ruido_morros.get_noise_2d(x * 3.0 + 50.0, z * 3.0) * 0.9
+	var h := ALTURA_PLATO * smoothstep(RAIO_PLATO + 1.2, RAIO_PLATO - 0.4, dp)
+	# Rampa de terra subindo até o morro.
+	var t := clampf((RAMPA_BAIXO.x - x) / (RAMPA_BAIXO.x - RAMPA_CIMA.x), 0.0, 1.0)
+	var corredor := smoothstep(2.9, 1.5, absf(z - RAMPA_BAIXO.z)) * (1.0 if x < RAMPA_BAIXO.x + 0.5 else 0.0)
+	h = maxf(h, ALTURA_PLATO * t * corredor)
+	# Terraços (degraus de cultivo) subindo até a borda no sudoeste.
+	var r := p.length() / RAIO_A
+	var ang := atan2(z, x)
+	var janela := smoothstep(0.75, 0.35, absf(wrapf(ang - deg_to_rad(135.0), -PI, PI)))
+	var v := clampf((r - 0.5) / 0.45, 0.0, 1.0) * 4.0
+	var degrau := floorf(v) + smoothstep(0.6, 0.95, v - floorf(v))
+	h += 0.45 * degrau * janela
+	# Colinas suaves (some perto de trilhas, construções e da borda).
+	var n := smoothstep(0.05, 0.8, _ruido_morros.get_noise_2d(x, z)) * 1.7
+	h += n * _mascara_plana(p, TRILHAS_A, PLANOS_A) * smoothstep(1.0, 0.82, r) * (1.0 - janela)
+	return h
 
 
-## Morro: um "degrau" mais alto em cima da ilha.
-func _plato(base: Vector3, raio: float, altura: float) -> void:
-	add_child(U.malha(U.cilindro(raio * 0.96, raio, altura, 16, 3), COR_ROCHA, base + Vector3(0, altura * 0.5, 0), 0.0, 0.25))
-	add_child(U.malha(U.cilindro(raio * 0.96, raio * 0.96, 0.1, 14), COR_GRAMA.lightened(0.05), base + Vector3(0, altura + 0.0, 0)))
-	add_child(U.solido(U.forma_cilindro(raio * 0.96, altura + 1.0), Transform3D(Basis(), base + Vector3(0, (altura - 1.0) * 0.5, 0))))
+## Altura do chão da ilha B: base em CENTRO_B.y e um morrinho ao norte.
+func _altura_b(x: float, z: float) -> float:
+	var p := Vector2(x, z)
+	var h := CENTRO_B.y
+	var dm := p.distance_to(Vector2(50, -6))
+	h += 2.2 * smoothstep(6.5, 1.0, dm)
+	var r := p.distance_to(Vector2(CENTRO_B.x, CENTRO_B.z)) / RAIO_B
+	var n := smoothstep(0.05, 0.8, _ruido_morros.get_noise_2d(x + 300.0, z)) * 1.2
+	h += n * _mascara_plana(p, TRILHAS_B, PLANOS_B) * smoothstep(1.0, 0.8, r)
+	return h
 
 
-func _rampa(de: Vector3, ate: Vector3, largura: float) -> void:
-	var espessura := 0.6
-	var t := U.transform_prancha(de, ate, espessura)
-	var tam := Vector3(largura, espessura, de.distance_to(ate) + 0.5)
-	var m := U.malha(U.caixa(tam), COR_TERRA)
-	m.transform = t
-	add_child(m)
-	add_child(U.solido(U.forma_caixa(tam), t))
+## 0 perto de trilhas e lugares planos, 1 longe deles.
+func _mascara_plana(p: Vector2, trilhas: Array, planos: Array) -> float:
+	var m := 1.0
+	for pl in planos:
+		m = minf(m, smoothstep(pl.z, pl.z + 3.0, p.distance_to(Vector2(pl.x, pl.y))))
+	var melhor := INF
+	for trilha in trilhas:
+		for i in trilha.size() - 1:
+			var a := Vector2(trilha[i].x, trilha[i].z)
+			var b := Vector2(trilha[i + 1].x, trilha[i + 1].z)
+			var ab := b - a
+			var k := clampf((p - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+			melhor = minf(melhor, p.distance_to(a + ab * k))
+	return minf(m, smoothstep(1.5, 4.5, melhor))
 
 
-## Trilha de terra (só visual), ligando uma lista de pontos.
-func _trilha(pontos: Array) -> void:
-	for i in pontos.size() - 1:
-		var a: Vector3 = pontos[i]
-		var b: Vector3 = pontos[i + 1]
-		var plano := Vector3(b.x - a.x, 0, b.z - a.z)
-		if plano.length() < 0.1 or absf(b.y - a.y) > 0.01:
-			continue  # trechos inclinados (rampa) já têm cor de terra
-		var tam := Vector3(1.6, 0.04, plano.length() + 1.0)
-		var m := U.malha(U.caixa(tam), COR_TERRA)
-		m.transform = Transform3D(Basis.looking_at(plano.normalized(), Vector3.UP), (a + b) * 0.5 + Vector3(0, 0.02, 0))
-		add_child(m)
-		var passos := int(plano.length() / 2.0) + 1
-		for j in passos + 1:
-			_livre(a.lerp(b, float(j) / passos), 2.0)
+## Mesmo ponto, mas na altura do chão (da ilha que estiver mais perto).
+func _no_chao(p: Vector3) -> Vector3:
+	var t := _terreno_de(p)
+	return Vector3(p.x, t.altura.call(p.x, p.z), p.z)
+
+
+func _terreno_de(p: Vector3) -> Node3D:
+	var da := Vector2(p.x - CENTRO_A.x, p.z - CENTRO_A.z).length() / RAIO_A
+	var db := Vector2(p.x - CENTRO_B.x, p.z - CENTRO_B.z).length() / RAIO_B
+	return terreno_a if da < db else terreno_b
+
+
+## Inclinação do chão (0 = plano, 1 = 45 graus).
+func _inclinacao(t: Node3D, x: float, z: float) -> float:
+	var d := 0.5
+	var dx: float = t.altura.call(x + d, z) - t.altura.call(x - d, z)
+	var dz: float = t.altura.call(x, z + d) - t.altura.call(x, z - d)
+	return Vector2(dx, dz).length() / (2.0 * d)
 
 
 func _cais() -> void:
@@ -296,35 +348,31 @@ func _esta_livre(p: Vector3, folga: float) -> bool:
 	return true
 
 
-func _sortear_pontos(centro: Vector3, r_min: float, r_max: float, n: int, altura: float, folga: float, no_plato: bool) -> Array[Vector3]:
+## Sorteia `n` pontos no chão de uma ilha, longe da borda, de lugares
+## ocupados e de encostas íngremes.
+func _sortear_pontos(t: Node3D, r_min: float, n: int, folga: float) -> Array[Vector3]:
 	var pontos: Array[Vector3] = []
 	var tentativas := 0
-	while pontos.size() < n and tentativas < 500:
+	while pontos.size() < n and tentativas < 800:
 		tentativas += 1
 		var ang := _rng.randf() * TAU
+		var r_max: float = t.borda(ang) - 1.8
 		var r := sqrt(_rng.randf_range(r_min * r_min, r_max * r_max))
-		var p := Vector3(centro.x + cos(ang) * r, altura, centro.z + sin(ang) * r)
-		# No morro, ignoramos a "zona livre" do próprio morro.
-		if no_plato:
-			var ok := true
-			for o in _ocupado:
-				if o.z == RAIO_PLATO + 1.5:
-					continue
-				if Vector2(p.x - o.x, p.z - o.y).length() < o.z + folga:
-					ok = false
-					break
-			if not ok:
-				continue
-		elif not _esta_livre(p, folga):
+		var x: float = t.centro.x + cos(ang) * r
+		var z: float = t.centro.z + sin(ang) * r
+		if _inclinacao(t, x, z) > 0.45:
+			continue
+		var p := Vector3(x, t.altura.call(x, z), z)
+		if not _esta_livre(p, folga):
 			continue
 		pontos.append(p)
 		_livre(p, folga)
 	return pontos
 
 
-func _espalhar_arvores(centro: Vector3, r_min: float, r_max: float, n: int, altura: float, no_plato := false) -> void:
-	for p in _sortear_pontos(centro, r_min, r_max, n, altura, 1.6, no_plato):
-		_pinheiro(p, true)
+func _espalhar_arvores(t: Node3D, r_min: float, n: int) -> void:
+	for p in _sortear_pontos(t, r_min, n, 1.6):
+		_pinheiro(p - Vector3(0, 0.1, 0), true)
 
 
 ## Pinheiro torto de pintura chinesa: tronco em 2 partes e copas achatadas.
@@ -355,16 +403,21 @@ func _pinheiro(p: Vector3, com_colisao: bool) -> void:
 		add_child(U.solido(U.forma_cilindro(0.35, alt), Transform3D(Basis(), p + Vector3(0, alt * 0.5, 0))))
 
 
-func _espalhar_flores(centro: Vector3, r_min: float, r_max: float, n: int, altura: float, cor: Color, no_plato := false) -> void:
-	for p in _sortear_pontos(centro, r_min, r_max, n, altura, 1.0, no_plato):
+func _espalhar_flores(t: Node3D, r_min: float, n: int, cor: Color) -> void:
+	for p in _sortear_pontos(t, r_min, n, 1.0):
 		var flor := Flor.new()
 		flor.cor = cor
 		flor.position = p
 		add_child(flor)
 
 
-## Cachoeira que cai da beirada da ilha até o mar de nuvens.
-func _cachoeira(pos: Vector3, giro_y: float) -> void:
+## Cachoeira que cai da beirada da ilha (no ângulo `ang`) até o mar de nuvens,
+## com um riacho que vem de dentro da ilha seguindo o chão.
+func _cachoeira(t: Node3D, ang: float) -> void:
+	var borda: Vector3 = t.ponto_borda(ang)
+	var dentro := Vector3(t.centro.x - borda.x, 0, t.centro.z - borda.z).normalized()
+	var fora := -dentro
+	var pos := borda + dentro * 0.2 + Vector3(0, -0.3, 0)
 	var m := ShaderMaterial.new()
 	m.shader = preload("res://shaders/cachoeira.gdshader")
 	var altura := 45.0
@@ -374,12 +427,18 @@ func _cachoeira(pos: Vector3, giro_y: float) -> void:
 	mi.mesh = quad
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = pos + Vector3(0, -altura * 0.5 + 0.1, 0)
-	mi.rotation.y = giro_y
+	mi.position = pos + fora * 0.3 + Vector3(0, -altura * 0.5 + 0.1, 0)
+	mi.rotation.y = atan2(fora.x, fora.z)
 	add_child(mi)
-	# Riacho até a beirada.
-	var rio := U.malha(U.caixa(Vector3(1.6, 0.05, 4.0)), Color(0.7, 0.82, 0.9))
-	rio.position = pos + Vector3(0, 0.03, 0) + Basis(Vector3.UP, giro_y) * Vector3(0, 0, -2.0)
-	rio.rotation.y = giro_y
-	add_child(rio)
-	_livre(pos, 2.5)
+	# Riacho: pedacinhos que acompanham o relevo até a beirada.
+	for i in 6:
+		var c := borda + dentro * (0.5 + i * 0.9)
+		var y: float = t.altura.call(c.x, c.z)
+		if i == 0:
+			y = minf(y, pos.y + 0.25)
+		var rio := U.malha(U.caixa(Vector3(1.4 - i * 0.08, 0.06, 1.05)), Color(0.7, 0.82, 0.9))
+		rio.position = Vector3(c.x, y + 0.04, c.z)
+		rio.rotation.y = atan2(dentro.x, dentro.z)
+		rio.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(rio)
+	_livre(borda + dentro * 2.5, 3.5)
